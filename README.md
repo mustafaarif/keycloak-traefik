@@ -1,5 +1,4 @@
-# keycloak-traefik
-Keycloak with Traefik Proxy
+# Keycloak with Traefik Proxy
 
 ## Usage
 
