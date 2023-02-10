@@ -1,0 +1,48 @@
+version: "3"
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak
+    restart: unless-stopped
+    command: start
+    environment:
+      KC_PROXY_ADDRESS_FORWARDING: "true"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME: sso.swstack.com
+      KC_PROXY: edge
+      KC_HTTP_ENABLED: "true"
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/$POSTGRES_DB?ssl=allow
+      KC_DB_USERNAME: $POSTGRES_USER
+      KC_DB_PASSWORD: $POSTGRES_PASSWORD
+      KEYCLOAK_ADMIN: $KEYCLOAK_ADMIN
+      KEYCLOAK_ADMIN_PASSWORD: $KEYCLOAK_ADMIN_PASSWORD
+      KC_LOG_LEVEL: INFO
+      KC_FEATURES: declarative-user-profile
+    volumes:
+      - ./authserver.keytab:/etc/auth.keytab
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cloud-network-keycloak.rule=Host(`sso.swstack.com`)"
+      - "traefik.http.routers.cloud-network-keycloak.tls=true"
+      - "traefik.http.services.cloud-network-keycloak.loadbalancer.server.port=8080"
+    networks:
+        - "web"
+        - "keycloak-internal"
+  postgres:
+    image: docker.io/postgres:14
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: $POSTGRES_USER
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+      POSTGRES_DB: $POSTGRES_DB
+    volumes:
+      - ./dbData:/var/lib/postgresql/data
+    networks:
+        - "keycloak-internal"
+
+networks:
+  web:
+    external: true
+  keycloak-internal:
+    external: true

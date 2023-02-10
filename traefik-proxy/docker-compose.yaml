@@ -1,0 +1,42 @@
+version: '3.3'
+
+services:
+  traefik:
+    image: traefik:latest
+    hostname: traefik
+    container_name: traefik
+    restart: unless-stopped
+    env_file:
+      - ./traefik-docker.env
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      - web
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik.yml:/etc/traefik/traefik.yml
+      - ./certs/acme.json:/acme.json
+    labels:
+      - "traefik.enable=true"
+      # Dashboard
+      - "traefik.http.routers.traefik.rule=Host(`auth-proxy.swstack.com`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.tls.certresolver=CFresolver"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.middlewares=authtraefik"
+      - "traefik.http.middlewares.authtraefik.basicauth.users=eadmin:$$apr1$$MwJ5JjkJ$$b8BD8YIvSND.L5Eh.LlSm1"
+      # global redirect to https
+      - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
+      - "traefik.http.routers.http-catchall.entrypoints=web"
+      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
+      # middleware redirect
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      # wildcard
+      - "traefik.http.routers.traefik.tls.domains[0].main=swstack.com"
+      - "traefik.http.routers.traefik.tls.domains[0].sans=*.swstack.com"
+
+networks:
+  web:
+    external: true
