@@ -1,5 +1,9 @@
 # Keycloak with Traefik Proxy
 
+## HW and OS Requirements
+- VM with 2vcpu / 4G memory
+- Ubuntu 20.04+ or Rocky/Rhel/Centos 8+
+
 ## Usage
 
 ### Install Docker and Docker Compose
